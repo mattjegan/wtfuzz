@@ -51,7 +51,7 @@ class Fuzzer(object):
 
                 print(modifier('{} : {}'.format(response.status_code, url)))
             except requests.exceptions.ConnectionError as e:
-                print('Web server does not exist')
+                print('Web server does not exist or is unavailable')
 
     def _load_tests(self):
         self.tests = []
