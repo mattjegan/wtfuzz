@@ -10,6 +10,7 @@ class Fuzzer(object):
     def __init__(self):
         parser = argparse.ArgumentParser(description='A CLI tool for finding web resources')
         parser.add_argument('root_url', help='the url you want to start the search from')
+        parser.add_argument('-f', metavar='list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
 
         self._load_tests()
@@ -55,9 +56,17 @@ class Fuzzer(object):
 
     def _load_tests(self):
         self.tests = []
-        for root, dirs, filenames in os.walk('wtfuzz/assets/lists'):
-            for filename in filenames:
-                self.tests.extend([line.strip() for line in open('wtfuzz/assets/lists/{}'.format(filename), 'r')])
+
+        if self.args.f:
+            try:
+                self.tests.extend([line.strip() for line in open(self.args.f, 'r')])
+            except:
+                print('{} is not a valid file'.format(self.args.f))
+
+        else:
+            for root, dirs, filenames in os.walk('wtfuzz/assets/lists'):
+                for filename in filenames:
+                    self.tests.extend([line.strip() for line in open('wtfuzz/assets/lists/{}'.format(filename), 'r')])
 
 def main():
     wtfuzz = Fuzzer()
