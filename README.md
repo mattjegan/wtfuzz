@@ -46,3 +46,15 @@ optional arguments:
   -o output_file      an optional file to log output to.
   --only http_status  only show requests that return http_status
 ```
+
+## Contributing
+
+Anyone is welcome to contribute, just head over to [the issues page](https://github.com/mattjegan/wtfuzz/issues) and find an issue you'd like to work on. Check out the discussion and if it seems cool for you to begin working on something, fork the repository, make your changes, and then make a pull request back into this master branch. When making your changes, make sure to add yourself to the AUTHORS file.
+
+### Setup
+
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/<your-user>/wtfuzz`
+3. Go to the project directory: `cd wtfuzz`
+4. Install the required packages: `pip3 install -r requirements.txt`
+5. Run the code: `python3 wtfuzz/wtfuzz.py http://your-url-here.com myList.txt`
