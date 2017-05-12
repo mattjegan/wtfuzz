@@ -10,13 +10,15 @@ import requests
 class Fuzzer(object):
     def __init__(self):
         parser = argparse.ArgumentParser(description='A CLI tool for finding web resources')
-        parser.add_argument('-w', metavar='wait_time', required=False, type=int, default=0, help='an optional time to wait between the number of requests given by the -n flag. Note: this is per thread')
-        parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0, help='an optional number of requests to make before waiting for the time specified by the -w flag. Note: this is per thread')
+        parser.add_argument('-w', metavar='wait_time', required=False, type=int, default=0, help='an optional time to wait between the number of requests given by the -n flag. Note: this is per thread.')
+        parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0, help='an optional number of requests to make before waiting for the time specified by the -w flag. Note: this is per thread.')
         parser.add_argument('-t', metavar='num_threads', required=False, type=int, default=1, help='an optional number of threads to use to send requests.')
+        parser.add_argument('-o', metavar='output_file', required=False, type=str, help='an optional file to log output to.')
         parser.add_argument('root_url', help='the url you want to start the search from')
         parser.add_argument('list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
         self._load_tests()
+        self._open_file()
 
     def run(self):
         num_threads = self.args.t if self.args.t >= 1 else 1
@@ -58,9 +60,9 @@ class Fuzzer(object):
                 elif response.status_code >= 300:
                     modifier = crayons.yellow
 
-                print(modifier('{} : {}'.format(response.status_code, url)))
+                self._print(modifier('{} : {}'.format(response.status_code, url)))
             except requests.exceptions.ConnectionError as e:
-                print('Web server does not exist or is unavailable')
+                self._print('Web server does not exist or is unavailable')
 
             num_requests += 1
 
@@ -71,6 +73,15 @@ class Fuzzer(object):
             self.tests.extend([line.strip() for line in open(self.args.list_file, 'r')])
         except:
             print('{} is not a valid file'.format(self.args.list_file))
+
+    def _open_file(self):
+        if self.args.o:
+            self.outfile = open(self.args.o, 'w+')
+
+    def _print(self, string):
+        if hasattr(self, 'outfile'):
+            self.outfile.write('{}\n'.format(string))
+        print(string)
 
 def main():
     wtfuzz = Fuzzer()
