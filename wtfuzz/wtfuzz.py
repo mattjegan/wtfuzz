@@ -2,6 +2,7 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import inspect
 
 import crayons
 import requests
@@ -10,13 +11,11 @@ class Fuzzer(object):
     def __init__(self):
         parser = argparse.ArgumentParser(description='A CLI tool for finding web resources')
         parser.add_argument('root_url', help='the url you want to start the search from')
-        parser.add_argument('-f', metavar='list_file', type=str, help='an optional list of resources to check')
+        parser.add_argument('list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
-
         self._load_tests()
 
     def run(self):
-
         num_threads = 64
 
         test_buckets = {}
@@ -38,7 +37,7 @@ class Fuzzer(object):
 
     def send_requests(self, bucket):
         for test in bucket:
-            url = '{}/{}'.format(self.args.root_url, test)
+            url = '{}/{}'.format(self.args.root_url, test.lstrip('/'))
             try:
                 response = requests.get(url)
 
@@ -57,16 +56,10 @@ class Fuzzer(object):
     def _load_tests(self):
         self.tests = []
 
-        if self.args.f:
-            try:
-                self.tests.extend([line.strip() for line in open(self.args.f, 'r')])
-            except:
-                print('{} is not a valid file'.format(self.args.f))
-
-        else:
-            for root, dirs, filenames in os.walk('wtfuzz/assets/lists'):
-                for filename in filenames:
-                    self.tests.extend([line.strip() for line in open('wtfuzz/assets/lists/{}'.format(filename), 'r')])
+        try:
+            self.tests.extend([line.strip() for line in open(self.args.list_file, 'r')])
+        except:
+            print('{} is not a valid file'.format(self.args.list_file))
 
 def main():
     wtfuzz = Fuzzer()

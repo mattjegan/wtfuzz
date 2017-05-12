@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(author='Matthew Egan',
-      author_email='matthewj.egan@hotmai.com',
+      author_email='matthewj.egan@hotmail.com',
       description='A cli tool used for checking the existance of different types of web resources',
       name='wtfuzz',
       py_modules=[
@@ -17,5 +17,5 @@ setup(author='Matthew Egan',
             'requests==2.13.0',
       ],
       url='https://github.com/mattjegan/wtfuzz',
-      version='0.0.1'
+      version='0.0.9'
 )
