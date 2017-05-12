@@ -14,6 +14,7 @@ class Fuzzer(object):
         parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0, help='an optional number of requests to make before waiting for the time specified by the -w flag. Note: this is per thread.')
         parser.add_argument('-t', metavar='num_threads', required=False, type=int, default=1, help='an optional number of threads to use to send requests.')
         parser.add_argument('-o', metavar='output_file', required=False, type=str, help='an optional file to log output to.')
+        parser.add_argument('--only', metavar='http_status', required=False, type=int, help='only show requests that return http_status')
         parser.add_argument('root_url', help='the url you want to start the search from')
         parser.add_argument('list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
@@ -60,7 +61,10 @@ class Fuzzer(object):
                 elif response.status_code >= 300:
                     modifier = crayons.yellow
 
-                self._print(modifier('{} : {}'.format(response.status_code, url)))
+                if not self.args.only:
+                    self._print(modifier('{} : {}'.format(response.status_code, url)))
+                elif self.args.only == response.status_code:
+                    self._print(modifier('{} : {}'.format(response.status_code, url)))
             except requests.exceptions.ConnectionError as e:
                 self._print('Web server does not exist or is unavailable')
 

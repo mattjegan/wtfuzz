@@ -17,5 +17,5 @@ setup(author='Matthew Egan',
             'requests==2.13.0',
       ],
       url='https://github.com/mattjegan/wtfuzz',
-      version='0.0.11'
+      version='0.0.12'
 )
