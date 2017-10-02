@@ -45,6 +45,10 @@ optional arguments:
   -t num_threads      an optional number of threads to use to send requests.
   -o output_file      an optional file to log output to.
   -m http_method      http method to use for requests
+  -c http_status color  customize what color a given http status code will
+                        display as. Note: this parameter can be specified
+                        multiple times. Available Colors:
+                        [red,green,yellow,blue,black,magenta,cyan,white]
   --only http_status  only show requests that return http_status
 ```
 
