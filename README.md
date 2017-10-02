@@ -45,6 +45,7 @@ optional arguments:
   -t num_threads      an optional number of threads to use to send requests.
   -o output_file      an optional file to log output to.
   -m http_method      http method to use for requests
+  -b http_body        http body to use for requests
   --only http_status  only show requests that return http_status
 ```
 
