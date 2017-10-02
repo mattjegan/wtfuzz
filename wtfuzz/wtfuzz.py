@@ -15,12 +15,16 @@ class Fuzzer(object):
         parser.add_argument('-t', metavar='num_threads', required=False, type=int, default=1, help='an optional number of threads to use to send requests.')
         parser.add_argument('-o', metavar='output_file', required=False, type=str, help='an optional file to log output to.')
         parser.add_argument('-m', metavar='http_method', required=False, type=str, default='GET', help='http method to use for requests')
+        parser.add_argument('-c', metavar=('http_status', 'color'), required=False, action='append', nargs=2, help='customize what color a given http status code will display as. Note: this parameter can be specified multiple times. Available Colors: [red,green,yellow,blue,black,magenta,cyan,white]')
         parser.add_argument('-b', metavar='http_body', required=False, type=str, help='http body to use for requests')
         parser.add_argument('--only', metavar='http_status', required=False, type=int, help='only show requests that return http_status')
         parser.add_argument('root_url', help='the url you want to start the search from')
         parser.add_argument('list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
+
+        self.color_override = self._build_color_override_map(self.args.c)
         self.root_url = self._generate_root_url(self.args.root_url)
+
         self._load_tests()
         self._open_file()
 
@@ -56,13 +60,7 @@ class Fuzzer(object):
             try:
                 response = self._send_request(self.args.m, url, self.args.b)
 
-                modifier = str
-                if response.status_code < 300:
-                    modifier = crayons.green
-                elif response.status_code >= 400:
-                    modifier = crayons.red
-                elif response.status_code >= 300:
-                    modifier = crayons.yellow
+                modifier = self._display_modifier(response.status_code)
 
                 if not self.args.only:
                     self._print(modifier('{} : {}'.format(response.status_code, url)))
@@ -72,6 +70,39 @@ class Fuzzer(object):
                 self._print('Web server does not exist or is unavailable')
 
             num_requests += 1
+
+    def _build_color_override_map(self, override_list):
+        overrides = {}
+        if override_list:
+            for override in override_list:
+                overrides[int(override[0])] = self._get_crayon_color(override[1])
+
+        return overrides
+
+    def _get_crayon_color(self, color):
+        return {
+            'red': crayons.red,
+            'green': crayons.green,
+            'yellow': crayons.yellow,
+            'blue': crayons.blue,
+            'black': crayons.black,
+            'magenta': crayons.magenta,
+            'cyan': crayons.cyan,
+            'white': crayons.white
+        }[color.lower()]
+
+    def _display_modifier(self, status_code):
+        if status_code in self.color_override:
+            return self.color_override[status_code]
+
+        if status_code < 300:
+            return crayons.green
+        elif status_code >= 400:
+            return crayons.red
+        elif status_code >= 300:
+            return crayons.yellow
+
+        return str
 
     def _send_request(self, http_method, url, body):
         method = http_method.upper()
