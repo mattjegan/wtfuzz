@@ -14,6 +14,7 @@ class Fuzzer(object):
         parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0, help='an optional number of requests to make before waiting for the time specified by the -w flag. Note: this is per thread.')
         parser.add_argument('-t', metavar='num_threads', required=False, type=int, default=1, help='an optional number of threads to use to send requests.')
         parser.add_argument('-o', metavar='output_file', required=False, type=str, help='an optional file to log output to.')
+        parser.add_argument('-m', metavar='http_method', required=False, type=str, default='GET', help='http method to use for requests')
         parser.add_argument('--only', metavar='http_status', required=False, type=int, help='only show requests that return http_status')
         parser.add_argument('root_url', help='the url you want to start the search from')
         parser.add_argument('list_file', type=str, help='an optional list of resources to check')
@@ -51,7 +52,7 @@ class Fuzzer(object):
 
             url = '{}/{}'.format(self.args.root_url, test.lstrip('/'))
             try:
-                response = requests.get(url)
+                response = self._send_request(self.args.m, url)
 
                 modifier = str
                 if response.status_code < 300:
@@ -69,6 +70,19 @@ class Fuzzer(object):
                 self._print('Web server does not exist or is unavailable')
 
             num_requests += 1
+
+    def _send_request(self, http_method, url):
+        method = http_method.upper()
+        if method == 'GET':
+            return requests.get(url)
+        elif method == 'POST':
+            return requests.post(url)
+        elif method == 'PATCH':
+            return requests.patch(url)
+        elif method == 'PUT':
+            return requests.put(url)
+        raise ValueError('Invalid argument, http_method: {}'.format(method))
+
 
     def _load_tests(self):
         self.tests = []
