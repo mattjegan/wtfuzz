@@ -16,11 +16,15 @@ class Fuzzer(object):
         parser.add_argument('-o', metavar='output_file', required=False, type=str, help='an optional file to log output to.')
         parser.add_argument('-m', metavar='http_method', required=False, type=str, default='GET', help='http method to use for requests')
         parser.add_argument('-c', metavar=('http_status', 'color'), required=False, action='append', nargs=2, help='customize what color a given http status code will display as. Note: this parameter can be specified multiple times. Available Colors: [red,green,yellow,blue,black,magenta,cyan,white]')
+        parser.add_argument('-b', metavar='http_body', required=False, type=str, help='http body to use for requests')
         parser.add_argument('--only', metavar='http_status', required=False, type=int, help='only show requests that return http_status')
         parser.add_argument('root_url', help='the url you want to start the search from')
         parser.add_argument('list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
+
         self.color_override = self._build_color_override_map(self.args.c)
+        self.root_url = self._generate_root_url(self.args.root_url)
+
         self._load_tests()
         self._open_file()
 
@@ -52,9 +56,9 @@ class Fuzzer(object):
                 num_requests = 0
                 time.sleep(self.args.w)
 
-            url = '{}/{}'.format(self.args.root_url, test.lstrip('/'))
+            url = '{}/{}'.format(self.root_url, test.lstrip('/'))
             try:
-                response = self._send_request(self.args.m, url)
+                response = self._send_request(self.args.m, url, self.args.b)
 
                 modifier = self._display_modifier(response.status_code)
 
@@ -100,16 +104,16 @@ class Fuzzer(object):
 
         return str
 
-    def _send_request(self, http_method, url):
+    def _send_request(self, http_method, url, body):
         method = http_method.upper()
         if method == 'GET':
             return requests.get(url)
         elif method == 'POST':
-            return requests.post(url)
+            return requests.post(url, data=body)
         elif method == 'PATCH':
-            return requests.patch(url)
+            return requests.patch(url, data=body)
         elif method == 'PUT':
-            return requests.put(url)
+            return requests.put(url, data=body)
         raise ValueError('Invalid argument, http_method: {}'.format(method))
 
 
@@ -124,6 +128,14 @@ class Fuzzer(object):
     def _open_file(self):
         if self.args.o:
             self.outfile = open(self.args.o, 'w+')
+
+    def _generate_root_url(self, root_url):
+        lowercase_url = root_url.strip().lower()
+        if lowercase_url.startswith('http://') or lowercase_url.startswith('https://'):
+            return root_url
+
+        self._print('Prepending protocol: http://{}'.format(root_url))
+        return 'http://' + root_url
 
     def _print(self, string):
         if hasattr(self, 'outfile'):

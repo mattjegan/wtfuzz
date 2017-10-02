@@ -49,6 +49,7 @@ optional arguments:
                         display as. Note: this parameter can be specified
                         multiple times. Available Colors:
                         [red,green,yellow,blue,black,magenta,cyan,white]
+  -b http_body        http body to use for requests
   --only http_status  only show requests that return http_status
 ```
 
