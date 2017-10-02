@@ -19,6 +19,7 @@ class Fuzzer(object):
         parser.add_argument('root_url', help='the url you want to start the search from')
         parser.add_argument('list_file', type=str, help='an optional list of resources to check')
         self.args = parser.parse_args()
+        self.root_url = self._generate_root_url(self.args.root_url)
         self._load_tests()
         self._open_file()
 
@@ -50,7 +51,7 @@ class Fuzzer(object):
                 num_requests = 0
                 time.sleep(self.args.w)
 
-            url = '{}/{}'.format(self.args.root_url, test.lstrip('/'))
+            url = '{}/{}'.format(self.root_url, test.lstrip('/'))
             try:
                 response = self._send_request(self.args.m, url)
 
@@ -95,6 +96,14 @@ class Fuzzer(object):
     def _open_file(self):
         if self.args.o:
             self.outfile = open(self.args.o, 'w+')
+
+    def _generate_root_url(self, root_url):
+        lowercase_url = root_url.strip().lower()
+        if lowercase_url.startswith('http://') or lowercase_url.startswith('https://'):
+            return root_url
+
+        self._print('Prepending protocol: http://{}'.format(root_url))
+        return 'http://' + root_url
 
     def _print(self, string):
         if hasattr(self, 'outfile'):
