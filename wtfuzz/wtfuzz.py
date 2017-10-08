@@ -1,4 +1,4 @@
-
+import signal
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
@@ -40,7 +40,7 @@ class Fuzzer(object):
 
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             futures = []
-            
+
             for key, bucket in test_buckets.items():
                 future = executor.submit(self.send_requests, bucket)
                 futures.append(future)
@@ -51,7 +51,7 @@ class Fuzzer(object):
     def send_requests(self, bucket):
         num_requests = 0
         for test in bucket:
-            
+
             if self.args.n > 0 and num_requests == self.args.n:
                 num_requests = 0
                 time.sleep(self.args.w)
@@ -142,7 +142,11 @@ class Fuzzer(object):
             self.outfile.write('{}\n'.format(string))
         print(string)
 
+def handler(signum, frame):
+    os.kill(os.getpid(), signal.SIGKILL)
+
 def main():
+    signal.signal(signal.SIGINT, handler)
     wtfuzz = Fuzzer()
     wtfuzz.run()
 
