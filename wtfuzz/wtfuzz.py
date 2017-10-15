@@ -1,32 +1,43 @@
 import signal
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import os
 import time
-
+import sys
 import crayons
 import requests
 
+
 class Fuzzer(object):
-    def __init__(self):
-        parser = argparse.ArgumentParser(description='A CLI tool for finding web resources')
-        parser.add_argument('-w', metavar='wait_time', required=False, type=int, default=0, help='an optional time to wait between the number of requests given by the -n flag. Note: this is per thread.')
-        parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0, help='an optional number of requests to make before waiting for the time specified by the -w flag. Note: this is per thread.')
-        parser.add_argument('-t', metavar='num_threads', required=False, type=int, default=1, help='an optional number of threads to use to send requests.')
-        parser.add_argument('-o', metavar='output_file', required=False, type=str, help='an optional file to log output to.')
-        parser.add_argument('-m', metavar='http_method', required=False, type=str, default='GET', help='http method to use for requests')
-        parser.add_argument('-c', metavar=('http_status', 'color'), required=False, action='append', nargs=2, help='customize what color a given http status code will display as. Note: this parameter can be specified multiple times. Available Colors: [red,green,yellow,blue,black,magenta,cyan,white]')
-        parser.add_argument('-b', metavar='http_body', required=False, type=str, help='http body to use for requests')
-        parser.add_argument('--only', metavar='http_status', required=False, type=int, help='only show requests that return http_status')
-        parser.add_argument('root_url', help='the url you want to start the search from')
-        parser.add_argument('list_file', type=str, help='an optional list of resources to check')
-        self.args = parser.parse_args()
+    def __init__(self, args=None):
+
+        self.args = self._check_args(args)
 
         self.color_override = self._build_color_override_map(self.args.c)
         self.root_url = self._generate_root_url(self.args.root_url)
 
         self._load_tests()
         self._open_file()
+
+    def _check_args(self, args=None):
+        parser = argparse.ArgumentParser(description='A CLI tool for finding web resources')
+        parser.add_argument('-w', metavar='wait_time', required=False, type=int, default=0,
+                            help='an optional time to wait between the number of requests given by the -n flag. Note: this is per thread.')
+        parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0,
+                            help='an optional number of requests to make before waiting for the time specified by the -w flag. Note: this is per thread.')
+        parser.add_argument('-t', metavar='num_threads', required=False, type=int, default=1,
+                            help='an optional number of threads to use to send requests.')
+        parser.add_argument('-o', metavar='output_file', required=False, type=str,
+                            help='an optional file to log output to.')
+        parser.add_argument('-m', metavar='http_method', required=False, type=str, default='GET',
+                            help='http method to use for requests')
+        parser.add_argument('-c', metavar=('http_status', 'color'), required=False, action='append', nargs=2,
+                            help='customize what color a given http status code will display as. Note: this parameter can be specified multiple times. Available Colors: [red,green,yellow,blue,black,magenta,cyan,white]')
+        parser.add_argument('-b', metavar='http_body', required=False, type=str, help='http body to use for requests')
+        parser.add_argument('--only', metavar='http_status', required=False, type=int,
+                            help='only show requests that return http_status')
+        parser.add_argument('root_url', help='the url you want to start the search from')
+        parser.add_argument('list_file', type=str, help='an optional list of resources to check')
+        return parser.parse_args(args)
 
     def run(self):
         num_threads = self.args.t if self.args.t >= 1 else 1
@@ -116,7 +127,6 @@ class Fuzzer(object):
             return requests.put(url, data=body)
         raise ValueError('Invalid argument, http_method: {}'.format(method))
 
-
     def _load_tests(self):
         self.tests = []
 
@@ -142,12 +152,15 @@ class Fuzzer(object):
             self.outfile.write('{}\n'.format(string))
         print(string)
 
+        
 def handler(signum, frame):
     os.kill(os.getpid(), signal.SIGKILL)
 
 def main():
     signal.signal(signal.SIGINT, handler)
-    wtfuzz = Fuzzer()
+    wtfuzz = Fuzzer(sys.argv[1:])
     wtfuzz.run()
 
-if __name__ == '__main__': main()
+
+if __name__ == '__main__':
+    main()
