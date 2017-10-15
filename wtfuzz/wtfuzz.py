@@ -1,3 +1,4 @@
+import signal
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
@@ -151,8 +152,12 @@ class Fuzzer(object):
             self.outfile.write('{}\n'.format(string))
         print(string)
 
+        
+def handler(signum, frame):
+    os.kill(os.getpid(), signal.SIGKILL)
 
 def main():
+    signal.signal(signal.SIGINT, handler)
     wtfuzz = Fuzzer(sys.argv[1:])
     wtfuzz.run()
 
