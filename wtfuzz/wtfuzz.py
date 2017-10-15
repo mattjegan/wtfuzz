@@ -19,7 +19,10 @@ class Fuzzer(object):
         self._open_file()
 
     def _check_args(self, args=None):
-        parser = argparse.ArgumentParser(description='A CLI tool for finding web resources')
+        parser = argparse.ArgumentParser(description='''A CLI tool for finding web resources.
+
+                If the root URL consists of query parameters, then
+                -q option is required.''')
         parser.add_argument('-w', metavar='wait_time', required=False, type=int, default=0,
                             help='an optional time to wait between the number of requests given by the -n flag. Note: this is per thread.')
         parser.add_argument('-n', metavar='num_requests', required=False, type=int, default=0,
@@ -33,6 +36,7 @@ class Fuzzer(object):
         parser.add_argument('-c', metavar=('http_status', 'color'), required=False, action='append', nargs=2,
                             help='customize what color a given http status code will display as. Note: this parameter can be specified multiple times. Available Colors: [red,green,yellow,blue,black,magenta,cyan,white]')
         parser.add_argument('-b', metavar='http_body', required=False, type=str, help='http body to use for requests')
+        parser.add_argument('-q', metavar='query_param', required=False, type=str, help='name of the CSV file containing query parameters. Required for URL having query params')
         parser.add_argument('--only', metavar='http_status', required=False, type=int,
                             help='only show requests that return http_status')
         parser.add_argument('root_url', help='the url you want to start the search from')
@@ -61,26 +65,38 @@ class Fuzzer(object):
 
     def send_requests(self, bucket):
         num_requests = 0
-        for test in bucket:
 
+        if not hasattr(self, 'params'):
+            self.params = [['']]
+        for test in bucket:
             if self.args.n > 0 and num_requests == self.args.n:
                 num_requests = 0
                 time.sleep(self.args.w)
 
-            url = '{}/{}'.format(self.root_url, test.lstrip('/'))
-            try:
-                response = self._send_request(self.args.m, url, self.args.b)
+            for q in self.params:
+                url = self.root_url.split('?')
 
-                modifier = self._display_modifier(response.status_code)
+                if len(url) > 2:
+                    print("Bad url")
+                    return -1
+                elif len(url) == 2:
+                    url = '{}/{}?{}'.format(url[0], test.lstrip('/'), url[1].format(*q))
+                else:
+                    url = '{}/{}'.format(url[0], test.lstrip('/'))
 
-                if not self.args.only:
-                    self._print(modifier('{} : {}'.format(response.status_code, url)))
-                elif self.args.only == response.status_code:
-                    self._print(modifier('{} : {}'.format(response.status_code, url)))
-            except requests.exceptions.ConnectionError as e:
-                self._print('Web server does not exist or is unavailable')
+                try:
+                    response = self._send_request(self.args.m, url, self.args.b)
 
-            num_requests += 1
+                    modifier = self._display_modifier(response.status_code)
+
+                    if not self.args.only:
+                        self._print(modifier('{} : {}'.format(response.status_code, url)))
+                    elif self.args.only == response.status_code:
+                        self._print(modifier('{} : {}'.format(response.status_code, url)))
+                except requests.exceptions.ConnectionError as e:
+                    self._print('Web server does not exist or is unavailable')
+
+                num_requests += 1
 
     def _build_color_override_map(self, override_list):
         overrides = {}
@@ -135,12 +151,32 @@ class Fuzzer(object):
         except:
             print('{} is not a valid file'.format(self.args.list_file))
 
+    def _load_query_params(self):
+        self.params = []
+
+        try:
+            self.params.extend([line.strip().split(',') for line in open(self.args.q, 'r')])
+            self.params.pop(0)
+        except:
+            print('{} is required for URI having query params and is either missing or is invalid'.format(self.args.q))
+
     def _open_file(self):
         if self.args.o:
             self.outfile = open(self.args.o, 'w+')
 
     def _generate_root_url(self, root_url):
         lowercase_url = root_url.strip().lower()
+        if '?' in  root_url:
+            self._load_query_params()
+            url, qp = root_url.split('?')
+            qp = qp.split('&')
+            qp_new = []
+            for q in qp:
+                a = str(q)
+                a += '{}' if q[-1] == '=' else '={}'
+                qp_new.append(a)
+            root_url = '{}?{}'.format(url, '&'.join(qp_new))
+
         if lowercase_url.startswith('http://') or lowercase_url.startswith('https://'):
             return root_url
 
@@ -160,7 +196,6 @@ def main():
     signal.signal(signal.SIGINT, handler)
     wtfuzz = Fuzzer(sys.argv[1:])
     wtfuzz.run()
-
 
 if __name__ == '__main__':
     main()

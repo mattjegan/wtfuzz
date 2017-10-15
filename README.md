@@ -23,6 +23,27 @@ wtfuzz http://your-url-here.com myList.txt
 200 : http://your-url-here.com/wp-admin.php
 ```
 
+### With query parameters
+```
+contents of query_params.csv:
+a,b,c
+1,2,3
+4,5,6
+
+wtfuzz http://your-url-here.com?a&b&c myList.txt -q query_params.csv
+
+404 : http://your-url-here.com/.bash_history?a=1b=2c=3
+404 : http://your-url-here.com/.bashrc?a=1b=2c=3
+404 : http://your-url-here.com/.cache?a=1b=2c=3
+404 : http://your-url-here.com/.config?a=1b=2c=3
+404 : http://your-url-here.com/.cvs?a=1b=2c=3
+200 : http://your-url-here.com/.git/HEAD?a=1b=2c=3
+200 : http://your-url-here.com/index.php?a=1b=2c=3
+200 : http://your-url-here.com/wp-admin.php?a=1b=2c=3
+...
+
+```
+
 ## Options
 ```
 usage: wtfuzz [-h] [-w wait_time] [-n num_requests] [-t num_threads]
