@@ -14,7 +14,7 @@ setup(author='Matthew Egan',
       },
       install_requires=[
             'crayons==0.1.2',
-            'requests==2.13.0',
+            'requests>=2.20.0',
       ],
       url='https://github.com/mattjegan/wtfuzz',
       version='0.0.12'
