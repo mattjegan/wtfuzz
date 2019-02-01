@@ -1,5 +1,5 @@
 crayons==0.1.2
-requests==2.13.0
+requests>=2.20.0
 pytest
 responses
 pytest-cov
